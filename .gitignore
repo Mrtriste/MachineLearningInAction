@@ -1,2 +1,4 @@
 /Reference/*
 *.pyc
+/Ch2/testDigits
+/Ch2/trainingDigits
