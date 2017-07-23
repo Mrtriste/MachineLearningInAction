@@ -331,3 +331,16 @@ def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
 
 
 
+### Chapter5  -  Log
+
+For the logistic regression classifier we’ll take our features and multiply each one by a weight and then add them up. This result will be put into the sigmoid, and we’ll get a number between 0 and 1. Anything above 0.5 we’ll classify as a 1, and anything below 0.5 we’ll classify as a 0. You can also think of logistic regression as a probability estimate.
+
+- 原理
+
+$$
+\sigma(z)=\frac{1}{1+e^{-z}},z = w^Tx\\即z = w_0\cdot x_0+ w_1\cdot x_1+...+ w_n\cdot x_n
+$$
+
+其中w是我们需要训练出来的n维权值向量，x是我们输入的n维特征向量。
+
+大于0.5的类别为1，小于的类别为0.
