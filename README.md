@@ -280,11 +280,54 @@ $$
 
 - 原理
 
-对两个特征（x,y）的数据集有k个类别，c1 c2 c3 ...ck，现在想知道一个实例(x,y)的分类
+对N维特征向量w（w1,w2,...,wN）的数据集有k个类别，c1 c2 c3 ...ck，现在想知道一个实例(x,y)的分类
 
 对(x,y)求分别属于k个类别的概率
 $$
-p(c_i|x,y) = \frac{p(x,y|c_i)p(c_i)}{p(x,y)}
+p(c_i|w) = \frac{p(w|c_i)p(c_i)}{p(w)}
 $$
-取最大的概率作为类别
+取最大的概率作为类别（其中在对不同类别计算的时候，分母p(w)对每个类别一样，因此可以抵消）
+
+对分子，第二项很简单，第一项的话w的各个维度条件独立，所以
+$$
+p(w|c_i) = p(w^{(1)}|c_i)*p(w^{(2)}|c_i)*...*p(w^{(N)}|c_i)=\prod_{j=1}^Np(w^{(j)}|c_i)
+$$
+
+
+（[更多详细理论](https://mrtriste.github.io/2017/03/15/naiveBayes-%E6%9C%B4%E7%B4%A0%E8%B4%9D%E5%8F%B6%E6%96%AF/)）
+
+- 训练流程
+
+```python
+# 我们的目的是通过上面等式中右边部分来计算左边部分，又分母抵消不用计算，所以我们需要计算的是上述的分子
+def trainNB0(trainMatrix,trainCategory):
+	numTrainDocs = len(trainMatrix)
+	numWords = len(trainMatrix[0])
+	pAbusive = sum(trainCategory)/float(numTrainDocs)
+	p0Num = zeros(numWords); p1Num = zeros(numWords)
+	p0Denom = 0.0; p1Denom = 0.0
+	for i in range(numTrainDocs):
+		if trainCategory[i] == 1:
+			p1Num += trainMatrix[i]
+			p1Denom += sum(trainMatrix[i]) #注意为什么加的是特征的个数sum()，而不是实例的个数1
+		else:
+			p0Num += trainMatrix[i]
+			p0Denom += sum(trainMatrix[i])
+    # 向量除以一个数，向量里的每一维都除以这个数
+	p1Vect = p1Num/p1Denom # p1Vect = log(p1Num/p1Denom)
+	p0Vect = p0Num/p0Denom # p0Vect = log(p0Num/p0Denom)
+	return p0Vect,p1Vect,pAbusive
+
+##### 多个小数相乘可能下溢，利用ln(a*b) = ln(a)+ln(b).将乘法改为加法，即改为注释
+
+def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
+	p1 = sum(vec2Classify * p1Vec) + log(pClass1)
+	p0 = sum(vec2Classify * p0Vec) + log(1.0 - pClass1)
+	if p1 > p0:
+		return 1
+	else:
+		return 0
+```
+
+
 
