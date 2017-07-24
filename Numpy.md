@@ -143,3 +143,138 @@ array([[1, 2, 1, 2],
 二维copy操作，copy1次。a变为[[1,2,1,2],[2,3,2,3]]
 ```
 
+
+
+### matrix 与 array
+
+Numpy matrices必须是2维的,但是 numpy arrays (ndarrays) 可以是多维的（1D，2D，3D····ND）. Matrix是Array的一个小的分支，包含于Array。所以matrix 拥有array的所有特性。
+
+- 在numpy中matrix的主要优势是：相对简单的乘法运算符号。例如，a和b是两个matrices，那么a*b，就是矩阵积。相反的是在numpy里面arrays遵从逐个元素的运算.
+
+```
+c=np.array([[4, 3],
+			[2, 1]])
+d=np.array([[1, 2], 
+			[3, 4]])
+print(c*d)
+# [[4 6]
+#  [6 4]]
+```
+
+而矩阵相乘，则需要numpy里面的dot命令 :
+
+```
+print(np.dot(c,d))
+# [[13 20]
+#  [ 5  8]]
+```
+
+- matrix 和 array 都可以通过objects后面加`.T` 得到其转置。但是 matrix objects 还可以在后面加 `.H` f得到共轭矩阵, 加 `.I` 得到逆矩阵。
+- `**` 运算符的作用也不一样 ：
+
+```
+print(a**2)
+# [[22 15]
+#  [10  7]]
+print(c**2)
+# [[16  9]
+#  [ 4  1]]
+```
+
+因为a是个matrix，所以a\*\*2返回的是a*a，相当于矩阵相乘。而c是array，c\*\*2相当于，c中的元素逐个求平方。
+
+- 在做归约运算时，array的维数会发生变化，但matrix总是保持为2维。例如下面求平均值的运算
+
+```
+>>> m = np.mat([[1,2],[2,3]])
+>>> m
+matrix([[1, 2],
+        [2, 3]])
+>>> mm = m.mean(1)
+>>> mm
+matrix([[ 1.5],
+        [ 2.5]])
+```
+
+对array 来说
+
+```
+a = np.array([[1,2],[2,3]])
+>>> a
+array([[1, 2],
+       [2, 3]])
+>>> am = a.mean(1)
+>>> am.shape
+(2,)
+>>> am
+array([ 1.5,  2.5])
+```
+
+
+
+### mat()函数
+
+mat()函数可以将数组转化为矩阵，在原有数组上修改
+
+
+
+### transpose()
+
+Returns a view of the array with axes transposed.不改变原数组，只返回view
+
+- For a 1-D array, this has no effect. (To change between column and row vectors, first cast the 1-D array into a matrix object.) 
+
+对一维不起作用，除非先转换成matrix,用mat()
+
+- For a 2-D array, this is the usual matrix transpose. For an n-D array, if axes are given, their order indicates how the axes are permuted (see Examples). If axes are not provided and `a.shape = (i[0], i[1], ... i[n-2], i[n-1])`, then`a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0])`.
+
+无参数的话就是按轴的逆序转换
+
+如果传tuple的话，那么在j位置上的i表示，矩阵a的i轴上的数是a.transpose()j轴上的数
+
+对高维数组，可以用transponse进行更复杂的转置：
+
+```
+arr = np.arange(16).reshape((2, 2, 4))
+arr
+
+array([[[ 0,  1,  2,  3],
+        [ 4,  5,  6,  7]],
+
+       [[ 8,  9, 10, 11],
+        [12, 13, 14, 15]]])
+
+arr.transpone((1, 0, 2))
+
+array([[[ 0,  1,  2,  3],
+        [ 8,  9, 10, 11]],
+
+       [[ 4,  5,  6,  7],
+        [12, 13, 14, 15]]])
+```
+
+这个稍微复杂一点，想明白确实想了一段时间。这个重塑，分为两步：
+
+1. 结构的调整 
+   　　首先输入`arr.shape`，得到数组结构`(2, 2, 4)`，transponse参数`（1， 0， 2）`，也就是说该数组调整后，结构不变还是`(2, 2, 4)`。
+2. 索引的改变 
+   　　比如说arr[0, 1, 0] = 4, 转置后, 1和0调换，所以，调整后4的索引为[1, 0, 0],其余的数字以此类推。
+
+
+
+### 通用函数(ufunc)
+
+NumPy提供常见的数学函数如 `sin` , `cos` 和 `exp` 。在NumPy中，这些叫作“通用函数”(ufunc)。在NumPy里这些函数作用按数组的元素运算，产生一个数组作为输出。
+
+```
+>>> B = arange(3)
+>>> B
+array([0, 1, 2])
+>>> exp(B)
+array([ 1.        ,  2.71828183,  7.3890561 ])
+>>> sqrt(B)
+array([ 0.        ,  1.        ,  1.41421356])
+>>> C = array([2., -1., 4.])
+>>> add(B, C)
+array([ 2.,  0.,  6.])
+```
