@@ -344,3 +344,36 @@ $$
 其中w是我们需要训练出来的n维权值向量，x是我们输入的n维特征向量。
 
 大于0.5的类别为1，小于的类别为0.
+
+- 实现
+
+(1) 加载数据中有一行
+
+```
+dataMat.append([1.0, float(lineArr[0]), float(lineArr[1])])
+```
+
+线性模型是有一个常数项w0，它代表了拟合线的上下浮动
+
+(2) 训练数据
+
+```python
+def gradAscent(dataMatIn, classLabels):
+  dataMatrix = mat(dataMatIn)
+  labelMat = mat(classLabels).transpose()
+  m,n = shape(dataMatrix)
+  alpha = 0.001
+  maxCycles = 500
+  weights = ones((n,1))
+  for k in range(maxCycles):
+    h = sigmoid(dataMatrix*weights)
+    error = (labelMat - h)
+    weights = weights + alpha * dataMatrix.transpose()* error
+  return weights
+```
+
+难理解的是倒数第二行，为什么这样就是梯度上升了呢，其实这后面隐藏了一个巨大的推导过程，详细的推导见
+
+http://blog.csdn.net/dongtingzhizi/article/details/15962797
+
+有非常非常详细的推导。
