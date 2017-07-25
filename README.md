@@ -377,3 +377,30 @@ def gradAscent(dataMatIn, classLabels):
 http://blog.csdn.net/dongtingzhizi/article/details/15962797
 
 有非常非常详细的推导。
+
+(3) 提高效率
+
+随机梯度上升-This is known as stochastic gradient ascent. Stochastic gradient ascent is an example of an online learning algorithm. This is known as online because we can incrementally update the classifier as new data comes in rather than all at once.
+
+(4) 个别特征数据缺失
+
+一般有以下处理方法
+
+```
+1.Use the feature’s mean value from all the available data.
+2.Fill in the unknown with a special value like -1.
+3.Ignore the instance.
+4.Use a mean value from similar items.
+5.Use another machine learning algorithm to predict the value.
+```
+
+在LR中，采取的办法是将缺失值设为0，且这种方法没有影响，因为
+
+```
+weights = weights + alpha * error * dataMatrix[randIndex]
+```
+
+如果某个特征的值为0，那么weights对应的特征的改变也为0，并没有朝着哪个方向迈进，因此选0对训练结果没有影响。
+
+
+
