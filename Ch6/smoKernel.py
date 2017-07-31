@@ -27,7 +27,7 @@ def clipAlpha(aj,H,L):
 	return aj
 
 def showDataMain():
-	dataArr,labelArr = loadDataSet('testSetRBF.txt')
+	dataArr,labelArr = loadDataSet('testSetRBF2.txt')
 	fig = plt.figure()
 	ax = fig.add_subplot(111)
 	labelArr = [i+2 for i in labelArr]
@@ -178,23 +178,6 @@ def calcWs(alphas,dataArr,classLabels):
 		w += multiply(alphas[i]*labelMat[i],X[i,:].T)
 	return w
 
-def smoPlattMain():
-	dataArr,labelArr = loadDataSet('testSet.txt')
-	b,alphas = smoP(dataArr, labelArr, 0.6, 0.001, 40)
-	print alphas[alphas>0]
-	print b
-	w = calcWs(alphas,dataArr,labelArr)
-	m = len(dataArr)
-	error = 0
-	for i in range(m):
-		res = mat(dataArr[i])*mat(w)+b
-		print res
-		if labelArr[i]==-1 and res >=0:
-			error += 1
-		if labelArr[i]==1 and res<=0:
-			error+=1
-	print 'error rate:%f'%(error/float(m))
-
 def testRbf(k1=1.3):
 	dataArr,labelArr = loadDataSet('testSetRBF.txt')
 	b,alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, ('rbf', k1))
@@ -221,7 +204,63 @@ def testRbf(k1=1.3):
 	print "the test error rate is: %f" % (float(errorCount)/m)
 
 
+########################################## handwriting
+def img2vector(filename):
+	returnVect = zeros((1,1024))
+	fr = open(filename)
+	for i in range(32):
+		lineStr = fr.readline()
+		for j in range(32):
+			returnVect[0,32*i+j] = int(lineStr[j])
+	return returnVect
+
+def loadImages(dirName):
+	from os import listdir
+	hwLabels = []
+	trainingFileList = listdir(dirName)
+	m = len(trainingFileList)
+	trainingMat = zeros((m,1024))
+	for i in range(m):
+		fileNameStr = trainingFileList[i]
+		fileStr = fileNameStr.split('.')[0]
+		classNumStr = int(fileStr.split('_')[0])
+		if classNumStr == 9: 
+			hwLabels.append(-1)
+		else: 
+			hwLabels.append(1)
+		trainingMat[i,:] = img2vector('%s/%s' % (dirName, fileNameStr))
+	return trainingMat, hwLabels
+
+def testDigits(kTup=('rbf', 10)):
+	dataArr,labelArr = loadImages('trainingDigits')
+	b,alphas = smoP(dataArr, labelArr, 200, 0.0001, 10000, kTup)
+	datMat=mat(dataArr); labelMat = mat(labelArr).transpose()
+	svInd=nonzero(alphas.A>0)[0]
+	sVs=datMat[svInd]
+	labelSV = labelMat[svInd];
+	print "there are %d Support Vectors" % shape(sVs)[0]
+	
+	m,n = shape(datMat)
+	errorCount = 0
+	for i in range(m):
+		kernelEval = kernelTrans(sVs,datMat[i,:],kTup)
+		predict=kernelEval.T * multiply(labelSV,alphas[svInd]) + b
+		if sign(predict)!=sign(labelArr[i]): errorCount += 1
+	print "the training error rate is: %f" % (float(errorCount)/m)
+
+	dataArr,labelArr = loadImages('testDigits')
+	errorCount = 0
+	datMat=mat(dataArr); labelMat = mat(labelArr).transpose()
+	m,n = shape(datMat)
+	for i in range(m):
+		kernelEval = kernelTrans(sVs,datMat[i,:],kTup)
+		predict=kernelEval.T * multiply(labelSV,alphas[svInd]) + b
+		if sign(predict)!=sign(labelArr[i]): errorCount += 1
+	print "the test error rate is: %f" % (float(errorCount)/m)
+
+
 if __name__ == "__main__":
-	testRbf()
-	showDataMain()
+	testDigits()
+	# testRbf()
+	# showDataMain()
 
