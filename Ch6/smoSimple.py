@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 
 from numpy import *
+import matplotlib
+import matplotlib.pyplot as plt
 
 def loadDataSet(fileName):
 	dataMat = []; labelMat = []
@@ -24,17 +26,20 @@ def clipAlpha(aj,H,L):
 		aj = L
 	return aj
 
-def smoSimple(dataMatIn, classLabels, C, toler, maxitera):
+################smoSimple
+def smoSimple(dataMatIn, classLabels, C, toler, maxiteraa):
 	dataMatrix = mat(dataMatIn); labelMat = mat(classLabels).transpose() # 100*1
 	b = 0; m,n = shape(dataMatrix)
 	alphas = mat(zeros((m,1))) # 100*1
-	itera = 0
-	while (itera < maxitera):
+	iteraa = 0
+	# You’ll only stop and exit the while loop when you’ve gone through the entire dataset\
+	# maxitera number of times without anything changing.
+	while (iteraa < maxiteraa):
 		alphaPairsChanged = 0
 		for i in range(m):
-			# multiply(alphas,labelMat).T : sum(alpha(i)*yi) 1*100
-			# dataMatrix*dataMatrix[i,:].T : 100 *1
-			fXi = float(multiply(alphas,labelMat).T * (dataMatrix*dataMatrix[i,:].T)) + b
+			# multiply(alphas,labelMat).T : alpha(t)*yt 1*100
+			# dataMatrix*dataMatrix[i,:].T : x_t*x_i 100 *1
+			fXi = float(multiply(alphas,labelMat).T * (dataMatrix*dataMatrix[i,:].T)) + b #sum(at*yt*K(xt,xi))+b
 			Ei = fXi - float(labelMat[i])
 			if ((labelMat[i]*Ei < -toler) and (alphas[i] < C)) or \
 						((labelMat[i]*Ei > toler) and (alphas[i] > 0)):
@@ -52,8 +57,9 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxitera):
 				if L==H: 
 					print "L==H"; 
 					continue
+				# this is different from tjxxff, because below is : alphas[j] -= labelMat[j]*(Ei - Ej)/eta, -=
 				eta = 2.0 * dataMatrix[i,:]*dataMatrix[j,:].T - dataMatrix[i,:]*dataMatrix[i,:].T - dataMatrix[j,:]*dataMatrix[j,:].T
-				if eta >= 0: print "eta>=0"; continue
+				if eta >= 0: print "eta>=0"; continue # eta = -|Phi(x1)-Phi(x2)|^2
 				alphas[j] -= labelMat[j]*(Ei - Ej)/eta
 				alphas[j] = clipAlpha(alphas[j],H,L)
 				if (abs(alphas[j] - alphaJold) < 0.00001): 
@@ -71,18 +77,35 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxitera):
 				else: 
 					b = (b1 + b2)/2.0
 				alphaPairsChanged += 1
-				print "itera: %d i:%d, pairs changed %d" % (itera,i,alphaPairsChanged)
+				print "iteraa: %d i:%d, pairs changed %d" % (iteraa,i,alphaPairsChanged)
 		if (alphaPairsChanged == 0): 
-			itera += 1
+			iteraa += 1
 		else: 
-			itera = 0
-		print "iteraation number: %d" % itera
+			iteraa = 0
+		print "iteraaation number: %d" % iteraa
 	return b,alphas
 
-if __name__ == "__main__":
+def showDataMain():
+	dataArr,labelArr = loadDataSet('testSet.txt')
+	fig = plt.figure()
+	ax = fig.add_subplot(111)
+	labelArr = [i+2 for i in labelArr]
+	dataArr = array(dataArr)
+	ax.scatter(dataArr[:,0],dataArr[:,1],array(labelArr)*15,array(labelArr)*15)
+	plt.show()
+
+def smoSimpleMain():
 	dataArr,labelArr = loadDataSet('testSet.txt')
 	a = mat([[3],[4],[5]])
 	b = mat([[2],[3],[4]])
 	print multiply(a,b).T
-	# print dataArr
-	# b,alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
+	print dataArr
+	b,alphas = smoSimple(dataArr, labelArr, 0.6, 0.001, 40)
+	print alphas[alphas>0]
+	print b
+
+
+if __name__ == "__main__":
+	smoSimpleMain()
+	showDataMain()
+
