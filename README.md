@@ -404,3 +404,74 @@ weights = weights + alpha * error * dataMatrix[randIndex]
 
 
 
+### Chapter6  -  SVM
+
+- SMO
+
+http://www.cnblogs.com/biyeymyhjob/archive/2012/07/17/2591592.html
+http://blog.csdn.net/v_july_v/article/details/7624837
+
+
+
+### Chapter7  -  AdaBoost
+
+- Bagging与Boosting
+
+```
+- Bagging:the data is taken from the original dataset S times to make S new datasets. The datasets are the same size as the original. Each dataset is built by randomly selecting an example from the original with replacement.
+- Boosting:Each new classifier is trained based on the performance of those already trained. Boosting makes new classifiers focus on data that was previously misclassified by previous classifiers.
+```
+
+- decision stump
+
+A decision stump makes a decision on one feature only. It’s a tree with only one split, so it’s a stump.
+
+- 训练流程
+
+```
+1.初始化权值分布为均值 D
+2.迭代若干次，每次进行以下操作
+	a.根据有权值的训练集学习，得到基本分类器，如决策树桩
+	b.计算分类误差率e_m
+	c.根据分类误差率计算Gm(x)的系数alpha_m
+	d.更新权值分布D
+3.得到基本分类器的线性组合
+	f(x) = sign(f(x)) = sign(sum_1^m(alpha_m*G_m(x)))
+```
+
+- 性能度量指标
+
+|      | 预测+1    | 预测-1    | 合计       |
+| ---- | ------- | ------- | -------- |
+| 真实+1 | TP      | FN      | 真实的正例数P' |
+| 真实-1 | FP      | TN      | 真实的负例数N' |
+| 合计   | 预测的正例数P | 预测的负例数N |          |
+
+```
+正确率：Precision = TP/(TP+FP).预测对的正例/预测的总正例
+召回率：Recall = TP/(TP+FN).预测对的正例/真正的总正例，正样本中的正确率
+ROC横轴：假阳率/假警报率：FP/(FP+TN).预测错的正例/真正的总负例， 负样本中的错判率
+ROC竖轴：真阳率/召回率：TP/(TP+FN).预测对的正例/真正的总正：
+命中率： TP/(TP + TN) 判对样本中的正样本率
+ACC = (TP + TN) / P+N 判对准确率
+```
+
+在理想的情况下，最佳的分类器应该尽可能地处手左上角，这就意味着分类器在假阳率很低
+的同时获得了很高的真阳率。例如在垃圾邮件的过滤中，这就相当于过滤了所有的垃圾邮件，但没有将任何合法邮件误识为垃圾邮件而放入垃圾邮件的文件夹中。
+
+ROC曲线由两个变量1-specificity 和 Sensitivity绘制. 1-specificity=FPR，即假正类率。Sensitivity即是真正类率，TPR(True positive rate),反映了正类覆盖程度。这个组合以1-specificity对sensitivity,即是以代价(costs)对收益(benefits)。
+
+- ROC曲线作图流程
+
+```
+1.将预测值按预测强度从小到大排序
+2.我们从强度最小的点开始，小于这个点的强度分为负例点，大于这个点的分为正例点，那么对于强度最小的点来说，
+	ROC纵轴：正样本的判对率为1.0，所有正例都判对了。
+	ROC横轴：负样本的错判率为1.0，因为所有真正是负例的样本都判为正例了。
+	所以这个点在ROC曲线中对应点(1.0,1.0)
+3.不断移动到下一个强度的实例点，小于这个点的强度分为负例点，大于这个点的分为正例点
+	如果当前这个点为正例点，则改变true positive rate,即纵轴，否则改变false positive rate,即横轴
+```
+
+
+
