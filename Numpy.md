@@ -119,6 +119,30 @@ b[i]中括号中的表达式被当作i和一系列:，来代表剩下的轴。Nu
 - a.resize(2,3)：无返回值，所谓有返回值，即会对原始多维数组进行修改；
 ```
 
+- array的copy()
+
+##### python中list的拷贝
+
+```python
+list1 = [1,2,3,4,5,6]
+list2 = list1 #与list1指向同一内存
+list3 = list1[1:4] #产生新list
+list4 = list1[:] #产生新list
+```
+
+##### numpy中array的拷贝
+
+```python
+list1 = array([1,2,3,4,5,6])
+list2 = list1
+list3 = list1[1:4]
+list4 = list1[:]
+list5 = list1.copy()
+list6 = list1[1:4].copy()
+# list1,list2,list3,list4都指向同一块内存，只是视图有可能不同，修改视图内存中的数据不会变，但修改数据的话内存中的数据会变，比如list3[1]=9,数据变成[1,2,9,4,5,6]
+# list5和list6将数据复制到新的内存中，有自己的一块内存存储数据。
+```
+
 
 
 ### tile
@@ -209,6 +233,47 @@ array([[1, 2],
 >>> am
 array([ 1.5,  2.5])
 ```
+
+- mat的*
+
+mat的\*，是矩阵的乘，与array的*不一样
+
+```
+a = mat([[4,3],[2,1]])
+b = mat([[1,2],[3,4]])
+print a*b
+--
+[[13,20],[5,8]]
+```
+
+mat.A
+
+将mat转为array
+
+```
+c = mat([1,2,3,4,5])
+print type(c.A>2),type(c>2)
+print c.A>2
+print (c.A>2)*(c.A<4)
+---
+'ndarray','matrix'
+[[False,False,True,True,True]]
+[[False,False,True,False,False]]
+```
+
+
+
+### nonzero
+
+输入值：数组或矩阵
+
+返回输入值中非零元素的信息（以矩阵的形式）
+
+这些信息中包括 两个矩阵， 包含了相应维度上非零元素所在的行标号，与列标标号。
+
+例如：a=mat([ [1,0,0],[0,0,0],[0,0,0]])
+
+则 nonzero(a) 返回值为两个矩阵：(matrix([[0]], dtype=int32), matrix([[0]], dtype=int32)) , 
 
 
 
