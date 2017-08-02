@@ -327,6 +327,28 @@ array([[[ 0,  1,  2,  3],
 
 
 
+
+### argsort
+
+从中可以看出argsort函数返回的是数组值从小到大的索引值
+
+```python
+# 一维
+x = np.array([3, 1, 2])
+np.argsort(x)
+# array([1, 2, 0])
+
+# 二维
+x = np.array([[0, 3], [2, 2]])
+np.argsort(x, axis=0) #按列排序
+# array([[0, 1],[1, 0]])
+np.argsort(x, axis=1) #按行排序
+# array([[0, 1],[0, 1]])
+```
+
+
+
+
 ### 通用函数(ufunc)
 
 NumPy提供常见的数学函数如 `sin` , `cos` 和 `exp` 。在NumPy中，这些叫作“通用函数”(ufunc)。在NumPy里这些函数作用按数组的元素运算，产生一个数组作为输出。
