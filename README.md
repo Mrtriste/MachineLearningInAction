@@ -475,3 +475,105 @@ ROC曲线由两个变量1-specificity 和 Sensitivity绘制. 1-specificity=FPR�
 
 
 
+
+
+### Chapter8  -  regression
+
+- 线性回归
+
+找到一个回归系数向量w，用y = xw来计算预测结果，问题就是如何运用现有的数据集找到最合适的w，一个常用的方法就是找出误差最小的w，如果简单地将误差加减，则正值和负值会抵消，因此选用平方误差。
+
+即 
+$$
+\sum_{i=1}^m(y_i-x_i^Tw)^2
+$$
+用矩阵替换掉求和符号即为
+$$
+(Y-Xw)^T(Y-Xw)
+$$
+对w求导并令其为0，得到
+$$
+2X(Y-Xw)=0 即Y=Xw
+$$
+两边同时乘以$$(X^TX)^{-1}X^T$$ ，得到$$w=(X^TX)^{-1}X^Ty$$
+
+代码实现
+
+```python
+def standRegres(xArr,yArr):
+	xMat = mat(xArr); yMat = mat(yArr).T
+	xTx = xMat.T*xMat
+	print xMat.T.shape,xMat.shape
+	print xTx.shape
+	# 计算行列式，行列式为0，则逆矩阵不存在
+	if linalg.det(xTx) == 0.0:
+		print "This matrix is singular, cannot do inverse"
+		return
+	ws = xTx.I * (xMat.T*yMat)
+	return ws
+```
+
+- 局部加权线性回归
+
+  http://blog.csdn.net/hujingshuang/article/details/46274723
+
+目前计算x的预测值，用的是全局的数据，且每个数据的权值一样，但实际是与x越接近的数据参考价值越大，所以有了局部加权，体现在误差公式上就是对训练集中的每个点都乘上一个权值系数，然后求和。权值系数用一个m*m的矩阵来表示，对角线上不为0.
+
+误差公式为$$\sum_1^mw(i,i)(y-\theta^Tx)^2$$
+
+用矩阵表示为
+$$
+J(\theta)=[W(Y-X\theta)]^T(Y-X\theta)=(Y-X\theta)^TW^T(Y-X\theta) \\=(Y^T-\theta^TX^T)W^T(Y-X\theta)\\=Y^TW^TY-\theta^TX^TW^TY-Y^TW^TX\theta+\theta^TX^TW^TX\theta
+$$
+对$$\theta$$求偏导并令其为0：
+$$
+-2X^TW^TY+2X^TW^TX\theta=0\\
+X^TWY=X^TWX\theta \\
+\theta = (X^TWX)^{-1}X^TWY
+$$
+流程：
+
+1.计算每个训练点的m*m权值矩阵（只有对角线上不为0），常用的权值计算公式有高斯核，离点越近的点权值越大，高斯核如下：
+$$
+w(i,i)=exp(\frac{|x^{(i)}-x|}{-2k^2})
+$$
+2.对每个需要预测的点都用上述的求$$\theta$$ 公式计算出权值向量，然后与预测的点的特征向量相乘即可得到预测值，这样的一个缺点就是对每个预测点都要用到全部数据集来计算一次。
+
+```python
+# 对单个点的预测
+def lwlr(testPoint,xArr,yArr,k=1.0):
+	xMat = mat(xArr); yMat = mat(yArr).T
+	m = shape(xMat)[0]
+	weights = mat(eye((m)))
+	for j in range(m):
+		diffMat = testPoint - xMat[j,:]
+		weights[j,j] = exp(diffMat*diffMat.T/(-2.0*k**2))
+	xTx = xMat.T * (weights * xMat)
+	if linalg.det(xTx) == 0.0:
+		print "This matrix is singular, cannot do inverse"
+		return
+	ws = xTx.I * (xMat.T * (weights * yMat))
+	return testPoint * ws
+# 计算整个训练集每个点的预测值，用于作图
+def lwlrTest(testArr,xArr,yArr,k=1.0):
+	m = shape(testArr)[0]
+	yHat = zeros(m)
+	for i in range(m):
+		yHat[i] = lwlr(testArr[i],xArr,yArr,k)
+	return yHat
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
