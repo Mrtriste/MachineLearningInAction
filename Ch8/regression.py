@@ -85,6 +85,9 @@ def lwlrMain():
 	ax.scatter(xMat[:,1].flatten().A[0], mat(yArr).T.flatten().A[0] , s=2,c='red')
 	plt.show()
 
+####################################8.4 Shrinking coefficients to understand our data
+#TOD0
+
 if __name__ == "__main__":
 	# main1()
 	lwlrMain()
