@@ -148,6 +148,8 @@ def handwritingClassTest():
 
 ### Chapter 3  -  Decision Tree
 
+（实现的是ID3算法，特征选择用的是信息增益，没有进行剪枝）
+
 The kNN algorithm in chapter 2 did a great job of classifying, but it didn’t lead to
 any major insights about the data. One of the best things about decision trees is that
 humans can easily understand the data.
@@ -728,6 +730,52 @@ def stageWise(xArr,yArr,eps=0.01,numIt=100):
 
 ### Chapter9  -  Tree-based regression
 
+CART是classification and regression tree，分类与回归树，正如名字所说的，它其实有两种树，分类树和回归树。第三章中讲的决策树是ID3决策树，根据信息增益作为特征选择算法。
+
+CART树与前面说的树有什么差别呢？
+
+1.之前的生成树的算法在对某个特征切分的时候，将数据集按这个特征的所有取值分成很多部分，这样的切分速度太快，而CART只进行```二元切分```，对每个特征只切分成两个部分。
+
+2.ID3和C4.5只能处理离散型变量，而CART因为是二元切分，```可以处理连续型变量```，而且只要将特征选择的算法改一下的话既可以生成回归树。
+
+##### 回归树
+
+- 特征选择
+
+  回归树使用的是平方误差最小法作为特征选择算法。
+
+  假设我们选取一个
+
+
+
+
+
+
+### Chapter10  -  k-means clustering
+
+k-均值算法流程：
+
+```
+创建k个点作为起始质心（经常是随机选择）
+当任意一个点的簇分配结果发生改变时
+	对数据集中的每个数据点
+		对每个质心
+  			计算质心与数据点之间的距离
+  		将数据点分配到距其最近的簇
+  	对每一个簇，计算簇中所有点的均值并将均值作为质心
+```
+
+以上的算法可能会收敛于局部最小值，有一种改进的算法是二分K-均值算法
+
+```
+将所有点看成一个襄
+当簇数目小于k时
+	对于每一个簇
+		计算总误差
+		在给定的簇上面进行K-均值聚类（k=2)
+		计算将该簇一分为二之后的总误差
+	选择使得误差最小的那个族进行划分操作
+```
 
 
 
