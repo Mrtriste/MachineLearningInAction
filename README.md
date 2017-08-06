@@ -738,16 +738,115 @@ CART树与前面说的树有什么差别呢？
 
 2.ID3和C4.5只能处理离散型变量，而CART因为是二元切分，```可以处理连续型变量```，而且只要将特征选择的算法改一下的话既可以生成回归树。
 
+本章讲了回归树和模型树
+
 ##### 回归树
 
 - 特征选择
 
   回归树使用的是平方误差最小法作为特征选择算法。
 
-  假设我们选取一个
+  其思想是将当前节点的数据按照某个特征在某个切分点分成两类，比如$R_1,R_2$，其对应的类别为$C_1,C_2$，我们的任务就是找到一个切分点使误差最小，那么怎么度量误差呢？这里使用的是平方误差，即
+  $$
+  min[min\sum_{x_i\in R_1}(y_i-c_1)^2+min\sum_{x_i\in R_2}(y_i-c_2)^2]
+  $$
+  遍历某个特征可取的s个切分点（对离散型变量，要么等于要么不等于；对连续型变量，<或者>=），选择使上式最小的切分点。
+
+  对每个确定的集合，c1,c2取平均值$\sum_{x_i\in R_1}(y_i-c_1)^2$和$\sum_{x_i\in R_2}(y_i-c_2)^2 $才会最小，这样的话就是求划分为两个集合后，分别对每个集合求方差*实例数，加起来的最小值。
+
+- 剪枝
+
+  简单的剪枝，如果merge后的误差更小就merge
 
 
+python实现
 
+```python
+# 选取最佳分裂特征和值
+def chooseBestSplit(dataSet, leafType=regLeaf, errType=regErr, ops=(1,4)):
+	tolS = ops[0]; tolN = ops[1]
+	# 全属于一类
+	if len(set(dataSet[:,-1].T.tolist()[0])) == 1:
+		return None, leafType(dataSet)
+	m,n = shape(dataSet)
+	S = errType(dataSet)
+	bestS = inf; bestIndex = 0; bestValue = 0
+	for featIndex in range(n-1):
+		# print array(dataSet[:,featIndex].T).tolist()
+		for splitVal in set(array(dataSet[:,featIndex].T)[0].tolist()):
+			mat0, mat1 = binSplitDataSet(dataSet, featIndex, splitVal)
+			if (shape(mat0)[0] < tolN) or (shape(mat1)[0] < tolN): 
+				continue
+			# 平方误差
+			newS = errType(mat0) + errType(mat1)
+			if newS < bestS:
+				bestIndex = featIndex
+				bestValue = splitVal
+				bestS = newS
+	# 当新分裂的误差与为分裂的误差小于一个阈值，就不分裂
+	if (S - bestS) < tolS:
+		return None, leafType(dataSet)
+	mat0, mat1 = binSplitDataSet(dataSet, bestIndex, bestValue)
+	if (shape(mat0)[0] < tolN) or (shape(mat1)[0] < tolN):
+		return None, leafType(dataSet)
+	return bestIndex,bestValue
+
+# 创建树
+def createTree(dataSet, leafType=regLeaf, errType=regErr, ops=(1,4)):
+	feat, val = chooseBestSplit(dataSet, leafType, errType, ops)
+	if feat == None: return val
+	retTree = {}
+	retTree['spInd'] = feat
+	retTree['spVal'] = val
+	lSet, rSet = binSplitDataSet(dataSet, feat, val)
+	retTree['left'] = createTree(lSet, leafType, errType, ops)
+	retTree['right'] = createTree(rSet, leafType, errType, ops)
+	return retTree
+
+#简单的剪枝，如果merge后的误差更小就merge
+def prune(tree, testData):
+	if shape(testData)[0] == 0: 
+		return getMean(tree)
+	if (isTree(tree['right']) or isTree(tree['left'])):
+		lSet, rSet = binSplitDataSet(testData, tree['spInd'],tree['spVal'])
+	if isTree(tree['left']): 
+		tree['left'] = prune(tree['left'], lSet)
+	if isTree(tree['right']): 
+		tree['right'] = prune(tree['right'], rSet)
+	if not isTree(tree['left']) and not isTree(tree['right']):
+		lSet, rSet = binSplitDataSet(testData, tree['spInd'],tree['spVal'])
+		errorNoMerge = sum(power(lSet[:,-1] - tree['left'],2)) +\
+				sum(power(rSet[:,-1] - tree['right'],2))
+		treeMean = (tree['left']+tree['right'])/2.0
+		errorMerge = sum(power(testData[:,-1] - treeMean,2))
+		if errorMerge < errorNoMerge:
+			print "merging"
+			return treeMean
+		else: 
+			return tree
+	else: return tree
+```
+
+##### 模型树
+
+树的叶子节点不是一个数值，而是一个模型的参数，如果叶子节点是线性回归模型，那么叶子节点存的就是权值系数w
+
+python实现
+
+```python
+# 叶子节点存放的东西
+def modelLeaf(dataSet):
+	ws,X,Y = linearSolve(dataSet)
+	return ws
+
+#线性模型的误差
+def modelErr(dataSet):
+	ws,X,Y = linearSolve(dataSet)
+	yHat = X * ws
+	return sum(power(Y - yHat, 2))
+
+createTree(myMat2, modelLeaf, modelErr,(1,10))
+```
 
 
 
@@ -765,6 +864,45 @@ k-均值算法流程：
   	对每一个簇，计算簇中所有点的均值并将均值作为质心
 ```
 
+python实现
+
+```python
+def randCent(dataSet, k):
+	n = shape(dataSet)[1] # n features
+	centroids = mat(zeros((k,n)))
+	for j in range(n):
+		minJ = min(dataSet[:,j])
+		rangeJ = float(max(dataSet[:,j]) - minJ)
+		centroids[:,j] = minJ + rangeJ * random.rand(k,1)
+	return centroids
+
+def kMeans(dataSet, k, distMeas=distEclud, createCent=randCent):
+	m = shape(dataSet)[0]
+	clusterAssment = mat(zeros((m,2))) # 属于哪个族，距离的平方
+	centroids = createCent(dataSet, k) # k个族，k行n列
+	clusterChanged = True
+	while clusterChanged:
+		clusterChanged = False
+		# 对每个实例找到该属于哪个族
+		for i in range(m):
+			minDist = inf; minIndex = -1
+			for j in range(k):
+				# 两个行向量的距离
+				distJI = distMeas(centroids[j,:],dataSet[i,:])
+				if distJI < minDist:
+					minDist = distJI; minIndex = j
+			if clusterAssment[i,0] != minIndex: 
+				clusterChanged = True
+			clusterAssment[i,:] = minIndex,minDist**2
+		print centroids
+		for cent in range(k):
+			ptsInClust = dataSet[nonzero(clusterAssment[:,0].A==cent)[0]]
+			centroids[cent,:] = mean(ptsInClust, axis=0) # 对每个特征列计算均值
+	return centroids, clusterAssment
+```
+
+
+
 以上的算法可能会收敛于局部最小值，有一种改进的算法是二分K-均值算法
 
 ```
@@ -775,6 +913,48 @@ k-均值算法流程：
 		在给定的簇上面进行K-均值聚类（k=2)
 		计算将该簇一分为二之后的总误差
 	选择使得误差最小的那个族进行划分操作
+```
+
+python实现
+
+```python
+def biKmeans(dataSet, k, distMeas=distEclud):
+	m = shape(dataSet)[0]
+	clusterAssment = mat(zeros((m,2)))
+	centroid0 = mean(dataSet, axis=0).tolist()[0]
+	centList =[centroid0] # 质心列表
+	for j in range(m):
+		clusterAssment[j,1] = distMeas(mat(centroid0), dataSet[j,:])**2
+	while (len(centList) < k):
+		lowestSSE = inf
+		for i in range(len(centList)):
+			ptsInCurrCluster = dataSet[nonzero(clusterAssment[:,0].A==i)[0],:]
+			centroidMat, splitClustAss = kMeans(ptsInCurrCluster, 2 , distMeas)
+			# 当前族划分为两个族后，当前族中数据的误差
+			sseSplit = sum(splitClustAss[:,1])
+			# 其他族的误差
+			sseNotSplit = sum(clusterAssment[nonzero(clusterAssment[:,0].A!=i)[0],1])
+			print "sseSplit, and notSplit: ",sseSplit,sseNotSplit
+			if (sseSplit + sseNotSplit) < lowestSSE:
+				bestCentToSplit = i
+				bestNewCents = centroidMat # 两个质心
+				bestClustAss = splitClustAss.copy() 
+				lowestSSE = sseSplit + sseNotSplit
+		# 两个质心中的后一个的index是list的长度
+		bestClustAss[nonzero(bestClustAss[:,0].A == 1)[0],0] = len(centList)
+		# 前一个是被分裂的那个index
+		bestClustAss[nonzero(bestClustAss[:,0].A == 0)[0],0] = bestCentToSplit
+		print 'the bestCentToSplit is: ',bestCentToSplit
+		print 'the len of bestClustAss is: ', len(bestClustAss)
+		# 原来的质心改成2个中的第一个
+		centList[bestCentToSplit] = bestNewCents[0,:]
+		# 在列表最后加上2个中的第二个
+		centList.append(bestNewCents[1,:])
+		# 将被分裂的那个族（属于哪个族，距离的平方）重新赋值，一一对应，没有问题
+		clusterAssment[nonzero(clusterAssment[:,0].A == bestCentToSplit)[0],:]= bestClustAss
+	for i in range(k):
+		centList[i] = centList[i].tolist()[0]
+	return mat(centList), clusterAssment
 ```
 
 
