@@ -959,13 +959,136 @@ def biKmeans(dataSet, k, distMeas=distEclud):
 
 
 
+### Chapter11  -  Association analysis  
 
+一个项集的支持度(support)被定义为数据集中包含该项集的记录所占的比例
 
+可信度或置信度（confidence)是针对一条诸如{尿布} ->{葡萄酒}的关联规则来定义的。这条规则的可信度被定义为“支持度({尿布，葡萄酒})/支持度({尿布})”。
 
+- 寻找频繁项集
 
+Apriori原理是说如果某个项集是频繁的，那么它的所有子集也是频繁的。
+对于图11-2给出的例子，这意味着如果{0，1}是频繁的，那么{0}、{1}也一定是频繁的。这个原理直观上并没有什么帮助，但是如果反过来看就有用了，也就是说如果一个项集是非频繁集，那么它的所有超集也是非频繁的。
 
+Apriori算法流程：
 
+```
+当集合中项的个数大于0时
+  构建一个k个项组成的候选项集的列表
+  检查数据以确认每个项集都是频繁的
+  保留频繁项集并构建k+1项组成的候选项集的列表
+```
 
+python 实现
+
+```python
+# 过滤支持度不符合的项
+def scanD(D, Ck, minSupport):
+	ssCnt = {}
+	for tid in D:
+		# 用frozenset的作用体现在这里，ssCnt[can],可以作为key
+		for can in Ck:
+			if can.issubset(tid):
+				if not ssCnt.has_key(can): 
+					ssCnt[can]=1
+				else: 
+					ssCnt[can] += 1
+	numItems = float(len(D))
+	retList = []
+	supportData = {}
+	for key in ssCnt: # frozenset is the key
+		support = ssCnt[key]/numItems
+		if support >= minSupport:
+			retList.insert(0,key)
+		supportData[key] = support
+	return retList, supportData
+
+#根据前一个每项长度为k-1的列表生成每项长k的列表
+def aprioriGen(Lk, k): #creates Ck
+	retList = []
+	lenLk = len(Lk)
+	for i in range(lenLk):
+		for j in range(i+1, lenLk):
+			# 除了最后一个元素的
+			L1 = list(Lk[i])[:k-2]; L2 = list(Lk[j])[:k-2]
+			L1.sort(); L2.sort()
+			if L1==L2:
+				retList.append(Lk[i] | Lk[j])
+	return retList
+
+#full apriori
+def apriori(dataSet, minSupport = 0.5):
+	C1 = createC1(dataSet)
+	D = map(set, dataSet)
+	L1, supportData = scanD(D, C1, minSupport)
+	L = [L1]
+	k = 2
+	while (len(L[k-2]) > 0):
+		#根据前一个每项长度为k-1的列表生成每项长k的列表
+		Ck = aprioriGen(L[k-2], k)
+		# 过滤掉支持度不满足的项
+		Lk, supK = scanD(D, Ck, minSupport)
+		supportData.update(supK) # 增加一些键值对
+		L.append(Lk)
+		k += 1
+	return L, supportData
+```
+
+- 从频繁项集中挖掘关联规则
+
+一条规则P-> H 的可信度定义为Support(P |H)/support(P)，操作符丨表示集合的并操作.
+
+假设规则{0，1，2} ->3并不满足最小可信度要求，那么就知道任何左部为{0，1，2}子集的规则也不会满足最小可信度要求，因为分子不变，分母非递减。
+
+```python
+def generateRules(L, supportData, minConf=0.7):
+	bigRuleList = []
+	# L[0]中的项只有一个元素
+	for i in range(1, len(L)):
+		for freqSet in L[i]: # freqSet like:frozenset([0,1,2])
+			H1 = [frozenset([item]) for item in freqSet]
+			if (i > 1): # 每个项多于两个元素
+				rulesFromConseq(freqSet, H1, supportData, bigRuleList,minConf)
+			else:
+				calcConf(freqSet, H1, supportData, bigRuleList, minConf)
+			'''
+			calcConf(freqSet, H1, supportData, bigRuleList, minConf) # H中只有一个元素
+			if (i > 1): # 每个项多于两个元素
+				# 大于2个元素的项 H才能大于一个元素
+				rulesFromConseq(freqSet, H1, supportData, bigRuleList,minConf) 
+			'''
+	return bigRuleList
+
+# freqSet是总集合，H是P->H中的H列表
+def calcConf(freqSet, H, supportData, brl, minConf=0.7):
+	prunedH = []
+	# H like: [{0},{1}], freqSet like:frozenset([0,1])
+	for conseq in H:
+		# print 'sss:',freqSet-conseq,conseq
+		# P->Q: support(P|Q)/support(P)
+		conf = supportData[freqSet]/supportData[freqSet-conseq]
+		if conf >= minConf:
+			print freqSet-conseq,'-->',conseq,'conf:',conf
+			brl.append((freqSet-conseq, conseq, conf))
+			prunedH.append(conseq)
+	return prunedH
+
+'''
+我们对支持度满足的项分裂成两部分P和H，找出可信度满足的P->H
+freqSet = P+H, 参数H是H的列表
+我们希望H先是一个元素，然后是两个元素，最多是len(freqSet)-1
+
+'''
+def rulesFromConseq(freqSet, H, supportData, brl, minConf=0.7):
+	# freqSet like:frozenset([0,1,2]), H like: [{0},{1},{2}],
+	m = len(H[0])
+	if (len(freqSet) > (m + 1)):
+		# 由长为m的元素生成长为m+1的元素
+		Hmp1 = aprioriGen(H, m + 1)
+		Hmp1 = calcConf(freqSet, Hmp1, supportData, brl, minConf)
+		if (len(Hmp1) > 1): #只有大于一个元素才能组合成更长的元素
+			rulesFromConseq(freqSet, Hmp1, supportData, brl, minConf)
+```
 
 
 
