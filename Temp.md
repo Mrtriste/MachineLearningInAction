@@ -53,3 +53,11 @@ http://blog.csdn.net/zhongkejingwang/article/details/43053513
 http://www.cnblogs.com/LeftNotEasy/archive/2011/01/19/svd-and-applications.html
 
 https://www.cs.cmu.edu/~venkatg/teaching/CStheory-infoage/book-chapter-4.pdf
+
+
+
+- 矩阵乘法的本质 
+
+https://www.zhihu.com/question/21351965/answer/176777987
+
+可以看到三维空间转到二维空间时，用了(a1,a2),(b1,b2),(c1,c2)三个向量，其实可以省去一个向量的，这也就是降维的方式所在，通过除去一些不必要的基，将数据从高维变成低维。
