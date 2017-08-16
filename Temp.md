@@ -73,3 +73,15 @@ http://blog.csdn.net/zhongkejingwang/article/details/43053513
 http://www.cnblogs.com/LeftNotEasy/archive/2011/01/19/svd-and-applications.html
 
 https://www.cs.cmu.edu/~venkatg/teaching/CStheory-infoage/book-chapter-4.pdf
+
+
+- something
+https://www.zhihu.com/question/21714701
+
+https://www.zhihu.com/question/21714701/answer/49084558
+
+http://dy.163.com/v2/article/detail/CNROG9AB0511ABV6.html
+
+http://blog.csdn.net/levy_cui/article/details/72519307
+
+kaggle 多少名能拿金牌
